@@ -1,0 +1,84 @@
+name: Wellness Tourism MLOps Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  data-preparation:
+    name: Data Registration and Preparation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Register and validate dataset
+        run: |
+          python tourism_project/model_building/data_register.py
+
+      - name: Prepare train and test data
+        run: |
+          python tourism_project/model_building/prep.py
+
+      - name: Upload train and test data artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tourism-split-data
+          path: |
+            tourism_project/data/processed/train.csv
+            tourism_project/data/processed/test.csv
+          if-no-files-found: error
+          retention-days: 7
+
+  model-training:
+    name: Model Training and Registration
+    needs: data-preparation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Download train and test data artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tourism-split-data
+          path: tourism_project/data/processed/
+
+      - name: Train, tune, evaluate, and save best model
+        run: |
+          python tourism_project/model_building/train.py
+
+      - name: Commit trained model to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tourism_project/deployment/best_model.joblib
+          git diff --staged --quiet || git commit -m "Update trained tourism prediction model"
+          git push
