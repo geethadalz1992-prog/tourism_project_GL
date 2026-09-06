@@ -26,7 +26,7 @@ MODEL_PATH = DEPLOYMENT_DIR / "best_model.joblib"
 TARGET_COLUMN = "ProdTaken"
 
 # MLflow local tracking location
-MLFLOW_TRACKING_URI = "file:./mlruns"
+MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
 EXPERIMENT_NAME = "tourism_package_prediction"
 
 
