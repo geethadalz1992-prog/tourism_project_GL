@@ -57,7 +57,9 @@ def main():
 
     # 3. Find numerical and categorical feature columns
     numeric_features = X_train.select_dtypes(include=["int64", "float64"]).columns.tolist()
-    categorical_features = X_train.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+    categorical_features = X_train.select_dtypes(
+    include=["object", "string", "category", "bool"]
+      ).columns.tolist()
 
     # 4. Build preprocessing pipeline
     numeric_transformer = Pipeline(
@@ -156,10 +158,11 @@ def main():
         joblib.dump(best_model, MODEL_PATH)
 
         # 13. Save model in MLflow as well
-        mlflow.sklearn.log_model(
-            sk_model=best_model,
-            name="tourism_purchase_model"
-        )
+          mlflow.sklearn.log_model(
+          sk_model=best_model,
+          name="tourism_purchase_model",
+          serialization_format="pickle"
+          )
 
         # 14. Print results
         print("MODEL TRAINING COMPLETED SUCCESSFULLY")
